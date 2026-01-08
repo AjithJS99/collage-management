@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Register Student</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+
+    <div class="max-w-4xl mx-auto bg-white p-8 rounded shadow-lg">
+        <div class="flex justify-between items-center mb-6 border-b pb-4">
+            <h2 class="text-2xl font-bold text-blue-600">🎓 Student Registration</h2>
+            <a href="dashboard.html" class="text-blue-500 hover:underline">← Back to Dashboard</a>
+        </div>
+        
+        <form id="regForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <div class="col-span-2 font-bold text-gray-500 uppercase text-sm mt-2">Identity</div>
+            <input type="text" name="regNo" placeholder="Reg No (e.g. 202501)" required class="border p-3 rounded">
+            <input type="text" name="fullName" placeholder="Full Name" required class="border p-3 rounded">
+            <input type="date" name="dob" required class="border p-3 rounded">
+            <select name="gender" class="border p-3 rounded bg-white"><option>Male</option><option>Female</option></select>
+
+            <div class="col-span-2 font-bold text-gray-500 uppercase text-sm mt-4">Contact Info</div>
+            <input type="email" name="email" placeholder="Email Address" required class="border p-3 rounded">
+            <input type="text" name="mobile" placeholder="Mobile Number" required class="border p-3 rounded">
+            <textarea name="address" placeholder="Full Address" class="border p-3 rounded col-span-2" rows="2"></textarea>
+
+            <div class="col-span-2 font-bold text-gray-500 uppercase text-sm mt-4">Academic & Guardian</div>
+            <select name="course" class="border p-3 rounded bg-white"><option>BCA</option><option>BSC</option><option>B.Com</option></select>
+            <input type="number" name="year" placeholder="Year (2025)" required class="border p-3 rounded">
+            <input type="text" name="contactPerson" placeholder="Guardian Name" class="border p-3 rounded">
+            <select name="relType" class="border p-3 rounded bg-white"><option>Parent</option><option>Guardian</option></select>
+            <input type="text" name="parentContact" placeholder="Guardian Contact" class="border p-3 rounded col-span-2">
+
+            <button type="submit" class="col-span-2 bg-blue-600 text-white font-bold py-3 rounded hover:bg-blue-700 transition">
+                REGISTER STUDENT
+            </button>
+        </form>
+        
+        <div id="status" class="mt-4 p-4 rounded text-center font-bold hidden"></div>
+    </div>
+
+    <script>
+        // PASTE YOUR API URL HERE TOO
+        const API_URL = "https://script.google.com/macros/s/AKfycbzO-cjHyyRWuDtbWI60UfC-mzJGauF9xop6j0iWilXN6Fzs5XqzsmgEOIotgsW1GsM/exec"; 
+
+        document.getElementById('regForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const status = document.getElementById('status');
+            
+            btn.innerText = "Processing...";
+            btn.disabled = true;
+
+            // Convert Form Data to JSON
+            const formData = new FormData(e.target);
+            const data = { action: 'register' };
+            formData.forEach((value, key) => data[key] = value);
+
+            try {
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+
+                status.innerText = result.message;
+                status.classList.remove('hidden');
+                
+                if(result.success) {
+                    status.className = "mt-4 p-4 rounded text-center font-bold bg-green-100 text-green-700 block";
+                    e.target.reset();
+                } else {
+                    status.className = "mt-4 p-4 rounded text-center font-bold bg-red-100 text-red-700 block";
+                }
+            } catch (err) {
+                status.innerText = "Error: " + err.message;
+                status.className = "mt-4 p-4 rounded text-center font-bold bg-red-100 text-red-700 block";
+            }
+            
+            btn.innerText = "REGISTER STUDENT";
+            btn.disabled = false;
+        });
+    </script>
+</body>
+</html>

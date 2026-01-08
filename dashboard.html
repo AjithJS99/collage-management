@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard | EduManager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-50 font-sans flex h-screen overflow-hidden">
+
+    <aside class="w-64 bg-white shadow-md flex-col hidden md:flex z-10">
+        <div class="p-6 text-2xl font-bold text-blue-600 border-b">EduManager</div>
+        <nav class="flex-1 p-4 space-y-2">
+            <a href="dashboard.html" class="block p-3 bg-blue-50 text-blue-700 font-bold rounded">Dashboard</a>
+            <a href="register.html" class="block p-3 text-gray-600 hover:bg-gray-100 rounded">Registration</a>
+            <a href="#" class="block p-3 text-gray-600 hover:bg-gray-100 rounded opacity-50 cursor-not-allowed">Examinations</a>
+            <a href="index.html" class="block p-3 text-red-500 hover:bg-red-50 rounded mt-10">Logout</a>
+        </nav>
+    </aside>
+
+    <main class="flex-1 overflow-y-auto p-8 relative">
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-3xl font-bold text-gray-800">Overview</h2>
+            <button onclick="downloadCSV()" class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700 flex items-center gap-2">
+                <span>📥</span> Download Report
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500">
+                <p class="text-gray-500 text-xs uppercase font-bold">Total Students</p>
+                <h3 class="text-3xl font-bold" id="s-total">...</h3>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-purple-500">
+                <p class="text-gray-500 text-xs uppercase font-bold">Club Expenses</p>
+                <h3 class="text-3xl font-bold text-purple-600" id="s-club">...</h3>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-pink-500">
+                <p class="text-gray-500 text-xs uppercase font-bold">Cultural Expenses</p>
+                <h3 class="text-3xl font-bold text-pink-600" id="s-cult">...</h3>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-gray-500">
+                <p class="text-gray-500 text-xs uppercase font-bold">Total Expenses</p>
+                <h3 class="text-3xl font-bold text-gray-700" id="s-exp">...</h3>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="bg-white p-6 rounded-xl shadow-sm">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-lg text-red-600">⚠️ Remedial Support Needed</h3>
+                    <span class="text-xs bg-red-100 text-red-600 px-2 py-1 rounded">Score < 40%</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-gray-50 text-gray-500">
+                            <tr>
+                                <th class="p-3">RegNo</th>
+                                <th class="p-3">Subject</th>
+                                <th class="p-3">Score</th>
+                            </tr>
+                        </thead>
+                        <tbody id="remedialTable">
+                            <tr><td colspan="3" class="p-3">Loading data...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-sm">
+                <h3 class="font-bold text-lg mb-4 text-gray-800">Performance Analysis</h3>
+                <canvas id="perfChart"></canvas>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // PASTE YOUR API URL HERE TOO
+        const API_URL = "https://script.google.com/macros/s/AKfycbzO-cjHyyRWuDtbWI60UfC-mzJGauF9xop6j0iWilXN6Fzs5XqzsmgEOIotgsW1GsM/exec"; 
+
+        window.onload = async () => {
+            // 1. Fetch Stats
+            try {
+                const res = await fetch(API_URL + "?action=getStats");
+                const data = await res.json();
+                
+                document.getElementById('s-total').innerText = data.studentCount;
+                document.getElementById('s-club').innerText = "₹ " + data.clubExp;
+                document.getElementById('s-cult').innerText = "₹ " + data.cultExp;
+                document.getElementById('s-exp').innerText = "₹ " + data.totalExp;
+            } catch (e) { console.error("Stats Error", e); }
+
+            // 2. Fetch Remedial
+            try {
+                const res = await fetch(API_URL + "?action=getWeakStudents");
+                const list = await res.json();
+                const tbody = document.getElementById('remedialTable');
+                
+                if(list.length === 0) {
+                    tbody.innerHTML = "<tr><td colspan='3' class='p-3 text-green-600'>All Clear!</td></tr>";
+                } else {
+                    let html = "";
+                    list.forEach(item => {
+                        html += `<tr class="border-b"><td class="p-3 font-mono">${item.regNo}</td><td class="p-3">${item.subject}</td><td class="p-3 font-bold text-red-600">${item.score}</td></tr>`;
+                    });
+                    tbody.innerHTML = html;
+                }
+            } catch (e) { console.error("Remedial Error", e); }
+
+            // 3. Render Dummy Chart (Static for demo)
+            new Chart(document.getElementById('perfChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['BCA', 'BSC', 'B.Com', 'BBA'],
+                    datasets: [{ label: 'Avg Pass %', data: [85, 72, 90, 88], backgroundColor: '#2563eb' }]
+                }
+            });
+        };
+
+        // CSV Download Logic
+        async function downloadCSV() {
+            try {
+                const res = await fetch(API_URL + "?action=getCSV");
+                const data = await res.json();
+                const blob = new Blob([data.csv], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = "Full_Report.csv";
+                a.click();
+            } catch(e) { alert("Download Failed"); }
+        }
+    </script>
+</body>
+</html>
