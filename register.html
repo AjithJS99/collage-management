@@ -55,7 +55,7 @@
 
             // Convert Form Data to JSON
             const formData = new FormData(e.target);
-            const data = { action: 'register' };
+            const data = { action: 'registerStudent' };
             formData.forEach((value, key) => data[key] = value);
 
             try {
