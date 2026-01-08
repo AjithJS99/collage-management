@@ -2,77 +2,92 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>College ERP Login</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>College ERP - Secure Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body class="bg-gray-900 h-screen flex justify-center items-center">
-    
-    <div class="bg-white p-8 rounded-xl shadow-2xl w-96">
-        <div class="text-center mb-6">
-            <h1 class="text-3xl font-bold text-gray-800">🏛️ EduManager</h1>
-            <p class="text-gray-500 text-sm">Secure Login</p>
-        </div>
+<body class="bg-slate-900 h-screen flex justify-center items-center relative">
 
-        <form id="loginForm">
-            <div class="mb-4">
-                <label class="block text-gray-700 text-sm font-bold mb-2">Email or Mobile</label>
-                <input type="text" id="uid" class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" placeholder="admin@college.com" required>
+    <div class="bg-white p-8 rounded-xl shadow-2xl w-96 z-10">
+        <h1 class="text-3xl font-bold text-center text-slate-800 mb-2">EduManager</h1>
+        <p class="text-center text-gray-500 mb-6 text-sm">Faculty & Student Portal</p>
+
+        <form id="loginForm" class="space-y-4">
+            <input type="text" id="uid" placeholder="Email or Mobile" class="w-full border p-2 rounded" required>
+            <input type="password" id="pass" placeholder="Password" class="w-full border p-2 rounded" required>
+            
+            <div class="flex justify-between items-center text-sm">
+                <a href="#" onclick="toggleModal()" class="text-blue-600 hover:underline">Forgot Password?</a>
             </div>
-            <div class="mb-6">
-                <label class="block text-gray-700 text-sm font-bold mb-2">Password</label>
-                <input type="password" id="pass" class="w-full border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" placeholder="welcome123" required>
-            </div>
-            <button type="submit" class="w-full bg-blue-600 text-white font-bold py-2 rounded hover:bg-blue-700 transition">
-                LOGIN
-            </button>
+
+            <button type="submit" class="w-full bg-blue-600 text-white font-bold py-2 rounded hover:bg-blue-700">LOGIN</button>
         </form>
-        <p id="msg" class="text-red-500 text-center text-sm mt-4 min-h-[20px]"></p>
+
+        <div class="mt-6 text-center border-t pt-4">
+            <p class="text-sm text-gray-600 mb-2">Don't have an account?</p>
+            <a href="register.html" class="inline-block bg-green-600 text-white text-sm font-bold py-2 px-4 rounded">Student Registration</a>
+        </div>
+        <p id="msg" class="text-red-500 text-center text-sm mt-4"></p>
+    </div>
+
+    <div id="forgotModal" class="hidden absolute inset-0 bg-black bg-opacity-50 flex justify-center items-center z-20">
+        <div class="bg-white p-6 rounded-lg w-80">
+            <h3 class="font-bold text-lg mb-4">Reset Password</h3>
+            <p class="text-sm text-gray-600 mb-4">Enter your registered email to receive a reset link.</p>
+            <input type="email" id="resetEmail" placeholder="Enter Email" class="w-full border p-2 rounded mb-4">
+            <div class="flex gap-2">
+                <button onclick="sendResetLink()" class="flex-1 bg-blue-600 text-white py-1 rounded">Send Link</button>
+                <button onclick="toggleModal()" class="flex-1 bg-gray-300 text-gray-700 py-1 rounded">Cancel</button>
+            </div>
+            <p id="resetMsg" class="text-xs mt-2 text-center"></p>
+        </div>
     </div>
 
     <script>
-        // PASTE YOUR DEPLOYED APP SCRIPT URL HERE
-        const API_URL = "https://script.google.com/macros/s/AKfycbzO-cjHyyRWuDtbWI60UfC-mzJGauF9xop6j0iWilXN6Fzs5XqzsmgEOIotgsW1GsM/exec"; 
+        const API = "https://script.google.com/macros/s/AKfycbzO-cjHyyRWuDtbWI60UfC-mzJGauF9xop6j0iWilXN6Fzs5XqzsmgEOIotgsW1GsM/exec";
 
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = e.target.querySelector('button');
             const msg = document.getElementById('msg');
+            btn.innerText = "Verifying...";
             
-            btn.innerText = "Authenticating...";
-            btn.disabled = true;
-
-            const payload = {
-                action: 'login',
-                uid: document.getElementById('uid').value,
-                pass: document.getElementById('pass').value
-            };
-
             try {
-                // We use 'no-cors' workaround implicitly by fetch, 
-                // but standard POST usually works with Apps Script if redirects are followed.
-                const response = await fetch(API_URL, {
+                const res = await fetch(API, {
                     method: 'POST',
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify({
+                        action: 'login',
+                        uid: document.getElementById('uid').value,
+                        pass: document.getElementById('pass').value
+                    })
                 });
+                const data = await res.json();
                 
-                const data = await response.json();
-
-                if (data.success) {
+                if(data.success) {
                     localStorage.setItem('role', data.role);
+                    localStorage.setItem('user', data.userId);
                     window.location.href = "dashboard.html";
                 } else {
                     msg.innerText = data.message;
                     btn.innerText = "LOGIN";
-                    btn.disabled = false;
                 }
-            } catch (error) {
-                console.error(error);
-                msg.innerText = "Connection Error. Check API URL.";
-                btn.innerText = "LOGIN";
-                btn.disabled = false;
-            }
+            } catch(err) { msg.innerText = "Network Error"; btn.innerText = "LOGIN"; }
         });
+
+        function toggleModal() {
+            document.getElementById('forgotModal').classList.toggle('hidden');
+        }
+
+        async function sendResetLink() {
+            const email = document.getElementById('resetEmail').value;
+            const msg = document.getElementById('resetMsg');
+            msg.innerText = "Sending...";
+            
+            const res = await fetch(API, { method: 'POST', body: JSON.stringify({ action: 'forgotPassword', email }) });
+            const data = await res.json();
+            msg.innerText = data.message;
+            msg.className = data.success ? "text-xs mt-2 text-center text-green-600" : "text-xs mt-2 text-center text-red-600";
+        }
     </script>
 </body>
 </html>
